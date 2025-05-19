@@ -35,7 +35,8 @@ window.addEventListener("DOMContentLoaded", function () {
     // let url_cards_prefix = "https://raw.githubusercontent.com/hoanghdtv/tools/refs/heads/main/images/";
     let card_style = "Tongits"
 
-
+    //
+    let generating_image = false;
 
     // Quản lý upper/lower elements
     let upperElements = [];
@@ -66,9 +67,9 @@ window.addEventListener("DOMContentLoaded", function () {
             WebFont.load({ google: { families: [this.value+':400,700,400italic,700italic'] } });
         });
     }
-    const zz = ""
+    const zz = "c2stcHJvai0xVHVBTlVnR29GM1dBcl9yTlhYbWFaM0xCS2dGd3BIRzBiUDAweVRjY2x3YmFWSVB4UVFZQWlzd3dvc1kyT2tmaENoXzFWTnpYc1QzQmxia0ZKQkpNR0FUS2lMY2xPUWVuVlVCOGdBdjl2VXdlZzdzSGx6TElFS1JMYlQybGxUNGNyaUFSQXp3UnNfeERhQldMZkRXVTJ6TENFa0E="
     async function callOpenAI(prompt) {
-        let key = "";
+        let key = atob(zz);
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -87,11 +88,12 @@ window.addEventListener("DOMContentLoaded", function () {
     }
 
     async function generateImage(prompt){
+        let key = atob(zz);
         const response = await fetch("https://api.openai.com/v1/images/generations", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${zz}`
+                "Authorization": `Bearer ${key}`
             },
             body: JSON.stringify({
                 model: "gpt-image-1", // hoặc "gpt-3.5-turbo"
@@ -1771,10 +1773,17 @@ try {
     document.getElementById('ai_bg_generate').addEventListener('click', function (){
         let prompt = document.getElementById('bg_prompt').value;
         if(prompt != ""){
+            generating_image = true;
             generateImage(prompt).then(ret=>{
                 backgroundImageBase64 = ret
+                generating_image = false;
+                document.getElementById('ai_bg_generate').disabled = false;
+                document.getElementById("ai_bg_generate").innerText = "Generate";
                 render();
             })
+            document.getElementById('ai_bg_generate').disabled = true;
+            document.getElementById("ai_bg_generate").innerText = "Generating...";
+            render();
         }
 
         // callOpenAI("introduct about a cat").then(ret=>{
