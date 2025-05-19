@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Poker Composer v2.0</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+</head>
+<body>
+<div class="container">
+    <div class="config">
+        <div class="box-controls">
+            <div class="box-controls title">Poker Composer v2.0</div>
+        </div>
+        <div class="size-controls">
+            <label for="outputSize"><b>Chọn kích thước banner:</b></label>
+            <label for="outputSize"><b>  </b></label>
+            <select id="outputSize">
+<!--                <option value="">-&#45;&#45;&#45;&#45;</option>-->
+                <option value="1:1">1:1 (1080x1080)</option>
+                <option value="5:4">5:4 (1350x1080)</option>
+                <option value="16:9">16:9 (1920x1080)</option>
+            </select>
+        </div>
+
+        <div class="background-controls">
+            <label><b>Tạo Background:</b></label>
+            <div class="form-row"><label><input checked="checked" type="checkbox" id="aiBackground"> Create AI Background</label></div>
+            <div id="backgroundAIControl" style="display: block">
+                <textarea id="bg_prompt" style="width: 270px; height: 150px;" ></textarea>
+                <button id="ai_bg_generate" type="button">Generate</button>
+            </div>
+            <div class="form-row"><label><input checked="checked" type="checkbox" id="enableBackground"> Setup Background</label></div>
+            <div class="form-row"><label><input type="checkbox" id="backgroundAutoFit"> Auto-fit background</label></div>
+            <div id="backgroundOptions" style="display:block;">
+                <input type="file" id="backgroundImageInput" accept="image/*">
+                <div class="form-row"><label>BG Scale (%):</label><input type="range" id="backgroundScale" min="10" max="300" value="100"></div>
+                <div class="form-row"><label>BG Rotation (deg):</label><input type="range" id="backgroundRotation" min="-180" max="180" value="0"></div>
+                <div class="form-row"><label>BG X:</label><input type="range" id="backgroundX" min="-1000" max="1000" value="0"></div>
+                <div class="form-row"><label>BG Y:</label><input type="range" id="backgroundY" min="-1000" max="1000" value="0"></div>
+            </div>
+
+        </div>
+
+        <div>
+            <label><input type="checkbox"checked="checked" id="enableHand"> Enable Hand</label>
+        </div>
+        <div class="hand-controls" style="display: block;">
+<!--            <div>-->
+<!--                <label>Hand Controls:</label>-->
+<!--                <button id="browseHands">Browse Hands</button>-->
+<!--                <input type="file" id="handFolderPicker" webkitdirectory directory multiple style="display: none;">-->
+<!--            </div>-->
+            <div>
+                <label>Select Hand:</label>
+                <select id="handSelect" disabled>
+                    <option value="">Choose a hand...</option>
+                </select>
+            </div>
+            <div>
+                <label>Hand Position X:</label>
+                <input type="range" id="handPosX" min="-500" max="500" value="0">
+            </div>
+            <div>
+                <label>Hand Position Y:</label>
+                <input type="range" id="handPosY" min="-500" max="500" value="0">
+            </div>
+            <div>
+                <label>Hand Rotation:</label>
+                <input type="range" id="handRotation" min="-180" max="180" value="0">
+            </div>
+            <div>
+                <label>Hand Scale (%):</label>
+                <input type="range" id="handScale" min="10" max="150" value="100">
+            </div>
+        </div>
+
+        
+        <div>
+        <label for="outputSize" ><b>Chỉnh sửa bộ bài:</b></label>
+        <input type="file" disabled="disabled" id="folderPicker" webkitdirectory directory multiple>
+            <div>
+                <label for="outputSize" >Chọn Card Style:</label>
+            <select id="cardStyle">
+                <option value="tongits">Tongits</option>
+                <option value="thai">Thai</option>
+                <option value="anime">Anime</option>
+                <option value="bigcard">Bigcard</option>
+            </select>
+        </div>
+    </div>
+
+        <div>
+            <label>Chọn Layout Style:</label>
+            <select id="layoutStyle">
+                <option value="arc">Arc</option>
+                <option value="straight">Straight</option>
+            </select>
+            <div><label><input type="checkbox" id="randomSpacing"> Spacing Randomize</label></div>
+        </div>
+
+        <div class="form-row">
+            <label>Card Spacing (px):</label>
+            <input type="range" id="cardSpacing" min="10" max="100" value="40">
+        </div>
+
+        <div class="form-row">
+            <label>Layer Spacing (px):</label>
+            <input type="range" id="layerSpacing" min="10" max="200" value="50">
+        </div>
+        <div class="offset-controls">
+            <div class="form-row"><label>Group Offset X:</label>
+            <input type="range" id="cardOffsetX" min="-500" max="500" value="0"></div>
+            <div class="form-row"><label>Group Offset Y:</label>
+            <input type="range" id="cardOffsetY" min="-500" max="500" value="0"></div>
+            <div class="form-row group-rotation-control">
+                <label>Group Rotation (deg):</label>
+                <input type="range" id="cardGroupRotation" min="-180" max="180" value="0">
+            </div>
+        </div>
+       
+
+        <div class="form-row">
+            <label>Card Scale (%):</label>
+            <input type="range" id="cardScale" min="50" max="150" value="100">
+        </div>
+
+        <div class="form-row">
+            <label>Arc Control:</label>
+            <input type="range" id="arcControl" min="-100" max="100" value="0">
+        </div>
+        <div id="layers"></div>
+        <button id="addLayer">Add Layer</button>
+
+
+        <div class="text-controls">
+            <button id="addTextElement" type="button">Add Text</button>
+            <div id="textElementsContainer"></div>
+        </div>
+
+        <div class="element-controls">
+            <button id="addUpperElement" type="button">Add Upper Element</button>
+            <button id="addLowerElement" type="button">Add Lower Element</button>
+            <div id="upperElementsContainer"></div>
+            <div id="lowerElementsContainer"></div>
+        </div>
+
+        <div class="export-buttons">
+            <button id="exportPNG">EXPORT PNG</button>
+            <button id="exportPSD" class="blue">EXPORT PSD</button>
+            <button id="exportConfig" class="orange-red">EXPORT CONFIG</button>
+        </div>
+    </div>
+    <div class="preview-area">
+        <div id="preview" style="background:transparent"></div>
+        <div class="preview-outline" id="previewOutline"></div>
+    </div>
+</div>
+
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<script src="lib/ag-psd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

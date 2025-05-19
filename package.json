@@ -1,0 +1,21 @@
+{
+  "name": "pokercomposerv1.3",
+  "version": "1.0.0",
+  "main": "app.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "ag-psd": "^28.0.1",
+    "express": "^5.1.0",
+    "openai": "^4.98.0"
+  }
+}
