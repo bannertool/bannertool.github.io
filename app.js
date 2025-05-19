@@ -97,7 +97,7 @@ window.addEventListener("DOMContentLoaded", function () {
             },
             body: JSON.stringify({
                 model: "gpt-image-1", // hoặc "gpt-3.5-turbo"
-                quality: "high",
+                quality: "low",
                 prompt: prompt
             })
         });
