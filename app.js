@@ -440,6 +440,7 @@ window.addEventListener("DOMContentLoaded", function () {
     loadHands().then(()=>{
         document.getElementById('loading_hand_label').style.display = 'none';
         document.getElementById('hand_control').style.display = 'block';
+        hand_loaded = true;
         render();
     })
 
