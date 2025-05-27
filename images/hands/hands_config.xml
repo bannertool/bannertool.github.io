@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hands>
+    <hand id="01_black" name="Black Hand Real">
+        <top_layer src="01_black_top.png" />
+        <bottom_layer src="01_black_bottom.png" />
+    </hand>
+	
+	<hand id="02_white" name="White Hand Real">
+        <top_layer src="01_white_top.png" />
+        <bottom_layer src="01_white_bottom.png" />
+    </hand>
+	
+	<hand id="03_asia" name="Asia Hand Real">
+        <top_layer src="01_white_top.png" />
+        <bottom_layer src="01_white_bottom.png" />
+    </hand>
+	
+	<hand id="04_3d_asia" name="3D Asia Hand">
+        <top_layer src="01_3d_asia_top.png" />
+        <bottom_layer src="01_3d_asia_bottom.png" />
+    </hand>
+	
+	<hand id="05_3d_asia" name="3D White Hand">
+        <top_layer src="01_3d_white_top.png" />
+        <bottom_layer src="01_3d_white_bottom.png" />
+    </hand>
+	
+	<hand id="06_anime" name="Anime Hand 01">
+        <top_layer src="01_anime_top.png" />
+        <bottom_layer src="01_anime_bottom.png" />
+    </hand>
+	
+	<hand id="07_female_01" name="Female Hand 01">
+        <top_layer src="01_female_top.png" />
+        <bottom_layer src="01_female_bottom.png" />
+    </hand>
+	
+	<hand id="08_female_02" name="Female Hand 02">
+        <top_layer src="02_female_top.png" />
+        <bottom_layer src="02_female_bottom.png" />
+    </hand>
+	
+	<hand id="09_Manga_Black" name="Black Manga 01">
+        <top_layer src="01_manga_black_top.png" />
+        <bottom_layer src="01_manga_black_bottom.png" />
+    </hand>
+	
+	
+    <!-- Có thể thêm các loại tay khác ở đây -->
+</hands> 

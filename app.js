@@ -1,12 +1,30 @@
 
 window.addEventListener("DOMContentLoaded", function () {
+
+    let access_token = ""
+    var workspace_code = ""
+    var accountId = ""
+
     // Kiểm tra thư viện ag-psd đã load chưa
     if (!window.agPsd) {
         console.error('ag-psd library not loaded properly!');
         document.getElementById('exportPSD').style.display = 'none';
     } else {
         console.log('ag-psd library loaded successfully');
+
+        const params = new URLSearchParams(window.location.search);
+        if(params.has("access_token")){
+            access_token = params.get('access_token');
+        }
+        if(params.has("workspaceCode")){
+            workspace_code = params.get('workspaceCode');
+        }
+        if(params.has("adAccountId")){
+            accountId = params.get('adAccountId');
+        }
+
     }
+
 
     let cardMap = {};
     let fileMap = {};
@@ -25,7 +43,7 @@ window.addEventListener("DOMContentLoaded", function () {
     let backgroundImage = null;
     let backgroundImageBase64 = null;
     let backgroundX = 0, backgroundY = 0, backgroundScale = 100, backgroundRotation = 0;
-    let backgroundAutoFit = false;
+    let backgroundAutoFit = true;
 
     let aiBackground = true;
     let bg_prompt = "";
@@ -44,6 +62,13 @@ window.addEventListener("DOMContentLoaded", function () {
 
     // Quản lý text layers bằng mảng
     let textElements = [];
+
+    let hand_loaded = false;
+    let card_loaded = false;
+    let img_name = "";
+    let img_size = "512x512"
+
+
 
     // Bước 1: Tích hợp Google Fonts tự động cho dropdown font
     const GOOGLE_FONTS = [
@@ -95,6 +120,7 @@ window.addEventListener("DOMContentLoaded", function () {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${key}`
             },
+
             body: JSON.stringify({
                 model: "gpt-image-1", // hoặc "gpt-3.5-turbo"
                 quality: "low",
@@ -248,59 +274,62 @@ window.addEventListener("DOMContentLoaded", function () {
     }
 
     load_cards(url_prefix + card_style).then(()=>{
+        card_loaded = true;
+        document.getElementById('card_control').style.display = "block";
+        document.getElementById('loading_card_label').style.display = "none";
         render();
     })
-
-    document.getElementById('folderPicker').addEventListener('change', async (e) => {
-        fileMap = {};
-        originalCardSizes = {};
-        for (let file of e.target.files) {
-            if (file.size > MAX_FILE_SIZE) {
-                console.warn(`File ${file.name} is too large (${file.size} bytes)`);
-                continue;
-            }
-            try {
-                fileMap[file.webkitRelativePath.split('/').pop()] = URL.createObjectURL(file);
-            } catch (error) {
-                console.error(`Error creating URL for ${file.name}:`, error);
-                continue;
-            }
-
-        }
-
-        const xmlText = await (await fetch(fileMap["config.xml"])).text();
-        console.log(xmlText)
-        const parser = new DOMParser();
-        const xml = parser.parseFromString(xmlText, "text/xml");
-        cardMap = {};
-        
-        // Load và lưu kích thước gốc của ảnh
-        for (let card of xml.getElementsByTagName("card")) {
-            const src = card.getAttribute("src");
-            const img = new Image();
-            img.crossOrigin = "anonymous"; // Cho phép cross-origin
-            img.src = fileMap[src];
-            try {
-                await new Promise((resolve, reject) => {
-                    img.onload = () => {
-                        originalCardSizes[card.getAttribute("id")] = {
-                            width: img.naturalWidth,
-                            height: img.naturalHeight
-                        };
-                        resolve();
-                    };
-                    img.onerror = (error) => {
-                        console.error(`Error loading image ${src}:`, error);
-                        reject(error);
-                    };
-                });
-                cardMap[card.getAttribute("id")] = fileMap[src];
-            } catch (error) {
-                console.error(`Failed to load card ${card.getAttribute("id")}:`, error);
-            }
-        }
-        render();
-    });
+    //
+    // document.getElementById('folderPicker').addEventListener('change', async (e) => {
+    //     fileMap = {};
+    //     originalCardSizes = {};
+    //     for (let file of e.target.files) {
+    //         if (file.size > MAX_FILE_SIZE) {
+    //             console.warn(`File ${file.name} is too large (${file.size} bytes)`);
+    //             continue;
+    //         }
+    //         try {
+    //             fileMap[file.webkitRelativePath.split('/').pop()] = URL.createObjectURL(file);
+    //         } catch (error) {
+    //             console.error(`Error creating URL for ${file.name}:`, error);
+    //             continue;
+    //         }
+    //
+    //     }
+    //
+    //     const xmlText = await (await fetch(fileMap["config.xml"])).text();
+    //     console.log(xmlText)
+    //     const parser = new DOMParser();
+    //     const xml = parser.parseFromString(xmlText, "text/xml");
+    //     cardMap = {};
+    //
+    //     // Load và lưu kích thước gốc của ảnh
+    //     for (let card of xml.getElementsByTagName("card")) {
+    //         const src = card.getAttribute("src");
+    //         const img = new Image();
+    //         img.crossOrigin = "anonymous"; // Cho phép cross-origin
+    //         img.src = fileMap[src];
+    //         try {
+    //             await new Promise((resolve, reject) => {
+    //                 img.onload = () => {
+    //                     originalCardSizes[card.getAttribute("id")] = {
+    //                         width: img.naturalWidth,
+    //                         height: img.naturalHeight
+    //                     };
+    //                     resolve();
+    //                 };
+    //                 img.onerror = (error) => {
+    //                     console.error(`Error loading image ${src}:`, error);
+    //                     reject(error);
+    //                 };
+    //             });
+    //             cardMap[card.getAttribute("id")] = fileMap[src];
+    //         } catch (error) {
+    //             console.error(`Failed to load card ${card.getAttribute("id")}:`, error);
+    //         }
+    //     }
+    //     render();
+    // });
 
     document.getElementById('addLayer').addEventListener('click', () => {
         const idx = layers.length + 1;
@@ -319,11 +348,11 @@ window.addEventListener("DOMContentLoaded", function () {
     });
 
     // Thêm các hàm xử lý cho phần hand
-    document.getElementById('enableHand').addEventListener('change', function(e) {
-        const handControls = document.querySelector('.hand-controls');
-        handControls.style.display = e.target.checked ? 'block' : 'none';
-        render();
-    });
+    // document.getElementById('enableHand').addEventListener('change', function(e) {
+    //     const handControls = document.querySelector('.hand-controls');
+    //     handControls.style.display = e.target.checked ? 'block' : 'none';
+    //     render();
+    // });
 
     // document.getElementById('browseHands').addEventListener('click', function() {
     //     document.getElementById('handFolderPicker').click();
@@ -409,6 +438,8 @@ window.addEventListener("DOMContentLoaded", function () {
     }
 
     loadHands().then(()=>{
+        document.getElementById('loading_hand_label').style.display = 'none';
+        document.getElementById('hand_control').style.display = 'block';
         render();
     })
 
@@ -806,13 +837,17 @@ window.addEventListener("DOMContentLoaded", function () {
 
     function render() {
         const preview = document.getElementById('preview');
+        // preview.style.width = '100%';
+        // preview.style.height = '100%';
+        // preview.style.transform = "scale(10%)"
         preview.innerHTML = '';
         let layerSpacing = parseInt(document.getElementById('layerSpacing').value);
         let cardSpacing = parseInt(document.getElementById('cardSpacing').value);
         let layout = document.getElementById('layoutStyle').value;
         let randomize = document.getElementById('randomSpacing').checked;
         let cardScale = parseInt(document.getElementById('cardScale').value) / 100;
-        let enableHand = document.getElementById('enableHand').checked;
+        // let enableHand = document.getElementById('enableHand').checked;
+        let enableHand = hand_loaded;
 
         let centerX = preview.clientWidth / 2;
         let centerY = preview.clientHeight * 0.4;
@@ -1155,6 +1190,8 @@ window.addEventListener("DOMContentLoaded", function () {
             outline.style.width = (w + 6) + 'px';
             outline.style.height = (h + 6) + 'px';
         }
+        img_size = w + "x"+ h;
+        updatePreviewName();
     }
 
     document.getElementById('outputSize').addEventListener('change', function(e) {
@@ -1163,8 +1200,268 @@ window.addEventListener("DOMContentLoaded", function () {
         render();
     });
 
+     createBase64Img = async function(){
+        const preview = document.getElementById('preview');
+        const outline = document.querySelector('.preview-outline');
+        const sizeKey = document.getElementById('outputSize').value;
+        const { width, height } = sizeMap[sizeKey];
+        if (outline) outline.style.display = 'none';
+        const oldBoxShadow = preview.style.boxShadow;
+        preview.style.boxShadow = 'none';
+
+        // Ẩn toàn bộ text HTML/SVG cũ (dù là color hay gradient)
+        const svgNodes = Array.from(preview.querySelectorAll('svg'));
+        svgNodes.forEach(svg => svg.style.display = 'none');
+        const spanNodes = Array.from(preview.querySelectorAll('span'));
+        spanNodes.forEach(span => span.style.display = 'none');
+
+        // Bake từng text layer thành PNG và chèn vào preview
+        const bakedImgs = [];
+        for (const el of textElements) {
+            if (!el.text) continue;
+            // Tạo canvas tạm
+            const fontSize = el.fontSize || 80;
+            const fontFamily = el.font || 'Arial';
+            const fontWeight = el.fontWeight || 'normal';
+            const fontStyle = el.fontStyle || 'normal';
+            const letterSpacing = el.letterSpacing || 0;
+            // Tạo canvas đủ lớn
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 2000;
+            canvas.height = 600;
+            ctx.save();
+            ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px '${fontFamily}'`;
+            ctx.textBaseline = 'middle';
+            ctx.textAlign = 'center';
+            let x = 1000;
+            let y = 300;
+            // Glow (outer glow)
+            if (el.enableOuterGlow) {
+                ctx.save();
+                ctx.shadowColor = el.outerGlowColor||'#fff';
+                ctx.shadowBlur = el.outerGlowBlur||8;
+                ctx.globalAlpha = (el.outerGlowOpacity||60)/100;
+                ctx.fillStyle = el.fillType === 'gradient' ? '#fff' : el.fill;
+                if (letterSpacing) {
+                    let chars = el.text.split('');
+                    let totalWidth = chars.reduce((acc, ch) => acc + ctx.measureText(ch).width, 0) + (chars.length-1)*letterSpacing;
+                    let xx = 1000 - totalWidth/2;
+                    for (let i=0; i<chars.length; ++i) {
+                        ctx.fillText(chars[i], xx, y);
+                        xx += ctx.measureText(chars[i]).width + letterSpacing;
+                    }
+                } else {
+                    ctx.fillText(el.text, x, y);
+                }
+                ctx.restore();
+            }
+            // Glow (inner glow) - mô phỏng bằng cách vẽ text trắng mờ lên trên
+            if (el.enableInnerGlow) {
+                ctx.save();
+                ctx.globalAlpha = (el.innerGlowOpacity||60)/100 * 0.5;
+                ctx.shadowColor = el.innerGlowColor||'#fff';
+                ctx.shadowBlur = el.innerGlowBlur||8;
+                ctx.fillStyle = el.fillType === 'gradient' ? '#fff' : el.fill;
+                if (letterSpacing) {
+                    let chars = el.text.split('');
+                    let totalWidth = chars.reduce((acc, ch) => acc + ctx.measureText(ch).width, 0) + (chars.length-1)*letterSpacing;
+                    let xx = 1000 - totalWidth/2;
+                    for (let i=0; i<chars.length; ++i) {
+                        ctx.fillText(chars[i], xx, y);
+                        xx += ctx.measureText(chars[i]).width + letterSpacing;
+                    }
+                } else {
+                    ctx.fillText(el.text, x, y);
+                }
+                ctx.restore();
+            }
+            // Gradient fill
+            let fillStyle = el.fill;
+            if (el.fillType === 'gradient') {
+                let grad;
+                if (el.gradientType === 'radial') {
+                    grad = ctx.createRadialGradient(1000, 300, 10, 1000, 300, 500);
+                } else {
+                    const angle = (parseInt(el.gradientAngle||0)%360) * Math.PI/180;
+                    const x1 = 1000 - Math.cos(angle)*1000;
+                    const y1 = 300 - Math.sin(angle)*300;
+                    const x2 = 1000 + Math.cos(angle)*1000;
+                    const y2 = 300 + Math.sin(angle)*300;
+                    grad = ctx.createLinearGradient(x1, y1, x2, y2);
+                }
+                (el.gradientStops||['#ff9966','#ff5e62','#fff']).forEach((color,i,arr)=>{
+                    grad.addColorStop(i/(arr.length-1), color);
+            });
+                fillStyle = grad;
+            }
+            ctx.fillStyle = fillStyle;
+            // Letter spacing
+            if (letterSpacing) {
+                let chars = el.text.split('');
+                let totalWidth = chars.reduce((acc, ch) => acc + ctx.measureText(ch).width, 0) + (chars.length-1)*letterSpacing;
+                let xx = 1000 - totalWidth/2;
+                for (let i=0; i<chars.length; ++i) {
+                    ctx.fillText(chars[i], xx, y);
+                    xx += ctx.measureText(chars[i]).width + letterSpacing;
+                }
+            } else {
+                ctx.fillText(el.text, 1000, 300);
+            }
+            // Stroke
+            if (el.enableStroke && el.strokeWidth > 0) {
+                ctx.save();
+                ctx.lineWidth = el.strokeWidth;
+                ctx.strokeStyle = el.stroke||'#000';
+                ctx.globalAlpha = (el.strokeOpacity||100)/100;
+                if (letterSpacing) {
+                    let xx = 1000 - ctx.measureText(el.text).width/2;
+                    for (let i=0; i<el.text.length; ++i) {
+                        ctx.strokeText(el.text[i], xx, y);
+                        xx += ctx.measureText(el.text[i]).width + letterSpacing;
+                    }
+                } else {
+                    ctx.strokeText(el.text, 1000, 300);
+                }
+                ctx.restore();
+            }
+            // Shadow
+            if (el.enableShadow) {
+                ctx.save();
+                ctx.shadowColor = el.shadow||'#000';
+                ctx.shadowBlur = el.shadowBlur||0;
+                ctx.shadowOffsetX = el.shadowX||0;
+                ctx.shadowOffsetY = el.shadowY||0;
+                ctx.globalAlpha = (el.shadowOpacity||60)/100;
+                ctx.fillText(el.text, 1000, 300);
+                ctx.restore();
+            }
+            // Lấy ảnh từ canvas
+            const img = document.createElement('img');
+            img.src = canvas.toDataURL('image/png');
+            img.style.position = 'absolute';
+            img.style.left = `calc(50% + ${el.x||0}px)`;
+            img.style.top = `calc(40% + ${el.y||0}px)`;
+            img.style.transform = `translate(-50%, -50%) scale(${el.scale/100}) rotate(${el.rotate||0}deg)`;
+            img.style.zIndex = 3000;
+            img.style.pointerEvents = 'none';
+            img.style.userSelect = 'none';
+            img.style.width = 'auto';
+            img.style.height = 'auto';
+            preview.appendChild(img);
+            bakedImgs.push(img);
+        }
+
+        let canvas = await html2canvas(preview, {
+            backgroundColor: null,
+            useCORS: true,
+            width,
+            height,
+            scale: 1
+        });
+        return canvas.toDataURL();
+        //         .then(canvas => {
+        //         preview.style.boxShadow = oldBoxShadow;
+        //     if (outline) outline.style.display = '';
+        //     // Xóa các ảnh text tạm thời vừa thêm vào
+        //     bakedImgs.forEach(img => img.remove());
+        //     // Hiện lại SVG text gradient
+        //     svgNodes.forEach(svg => svg.style.display = '');
+        //     // Hiện lại span text
+        //     spanNodes.forEach(span => span.style.display = '');
+        //     const link = document.createElement('a');
+        //     link.download = 'poker_hand.png';
+        //     link.href = canvas.toDataURL('image/png', 1.0);
+        //     link.click();
+        // });
+    }
+
+    pushImage = async function(img){
+        var formData = new FormData();
+        formData.append('bytes',img);
+        var response =  await fetch('https://qc-ua-booster-api.zingplay.com/v1/file/', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + access_token
+            },
+            body: formData
+        })
+        return response.json();
+    }
+
+    pushImageToMediaLibrary = async function(file_code, name){
+        var formData = new FormData();
+        formData.append('file_code',file_code);
+        formData.append('asset_name',name);
+        formData.append('workspace_code',workspace_code);
+        formData.append('ad_account_id',accountId);
+
+        var response =  await fetch('https://qc-ua-booster-api.zingplay.com/v1/assets/', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + access_token
+            },
+            body: formData
+        })
+        return response.json();
+    }
+
+    updatePreviewName = function(){
+        document.querySelector('#img_name_lb').innerText = img_size + ".png";
+    }
+
+    document.getElementById('publish').onclick = async function(){
+
+        img_name = document.querySelector('#img_name_lb').innerText;
+
+        if(access_token === "")
+            return;
+        var img = await createBase64Img();
+        let img_response = await pushImage(img);
+        if(img_response["result"] == "success"){
+            var file_code = img_response["data"]["file"]["file_code"];
+            console.log("file code: " + file_code);
+            let res = await pushImageToMediaLibrary(file_code,img_size);
+            console.log(JSON.stringify(res))
+        }
+
+    //     var formData = new FormData();
+    //     formData.append('bytes',img);
+    //     console.log(img)
+    //
+    //     fetch('https://qc-ua-booster-api.zingplay.com/v1/file/', {
+    //         method: 'POST',
+    //         headers: {
+    //             'Authorization': 'Bearer ' + access_token
+    //         },
+    //         body: formData
+    //     })
+    //         .then(response => response.json())
+    // .then(data => {
+    //
+    //         console.log('success:', JSON.stringify(data));
+    // })
+    // .catch(error => {
+    //         console.error('error:', error);
+    // });
+    }
+
+    document.getElementById('exportPNG').onclick = async function(){
+        // const preview = document.getElementById('preview');
+        // preview.style.width = '1080px'
+        // preview.style.height = '1080px'
+        //
+        // setTimeout(()=>{
+        //
+        // },100)
+
+        exportPNG()
+    }
+
+
+
     // Export PNG đúng size, trong suốt, không bị lớp mờ
-    document.getElementById('exportPNG').onclick = async function() {
+    exportPNG = async function() {
         const preview = document.getElementById('preview');
         const outline = document.querySelector('.preview-outline');
         const sizeKey = document.getElementById('outputSize').value;
@@ -1357,171 +1654,171 @@ window.addEventListener("DOMContentLoaded", function () {
     }
 
     // Export PSD: giữ nguyên transform (rotation, scale, translate) của từng lá bài và bàn tay, không bake lên canvas lớn
-    document.getElementById('exportPSD').onclick = async function() {
-        if (!window.agPsd) {
-            alert('ag-psd library not loaded. Cannot export PSD file.');
-            return;
-        }
-
-        const preview = document.getElementById('preview');
-        const psdLayers = [];
-
-        try {
-            // Tạo một mảng chứa promises của tất cả các ảnh cần load
-            const imageLoadPromises = [];
-
-            // Thêm các layer bài
-            const cardElements = Array.from(document.querySelectorAll('.card'));
-            for (let i = 0; i < cardElements.length; i++) {
-                const card = cardElements[i];
-                const loadPromise = new Promise(async (resolve) => {
-                    const pos = getElementPosition(card);
-                    try {
-                        // Tìm ID của card
-                        let cardId = '';
-                        for (const [id, url] of Object.entries(cardMap)) {
-                            if (url === card.src) {
-                                cardId = id;
-                                break;
-                            }
-                        }
-                        
-                        const imageData = await loadImageData(card.src);
-                        const style = window.getComputedStyle(card);
-                        const transform = style.transform;
-                        const scale = parseFloat(style.width) / originalCardSizes[cardId].width;
-                        
-                        psdLayers.push({
-                            name: `card_${cardId}`,
-                            imageData: imageData,
-                            left: Math.round(pos.left),
-                            top: Math.round(pos.top),
-                            visible: true,
-                            transform: transform,
-                            scale: scale
-                        });
-                    } catch (err) {
-                        console.error('Error loading card:', err);
-                    }
-                    resolve();
-                });
-                imageLoadPromises.push(loadPromise);
-            }
-
-            // Thêm bottom hand layer nếu có
-            if (document.getElementById('enableHand').checked && currentHand) {
-                const bottomHandImg = document.querySelector('.hand-layer:first-child');
-                if (bottomHandImg) {
-                    const loadPromise = new Promise(async (resolve) => {
-                        const pos = getElementPosition(bottomHandImg);
-                        try {
-                            const imageData = await loadImageData(currentHand.bottomLayer);
-                            const style = window.getComputedStyle(bottomHandImg);
-                            const transform = style.transform;
-                            
-                            // Tính toán scale dựa trên setting của người dùng
-                            const scale = currentHand.scale * 100;
-                            
-                            psdLayers.unshift({
-                                name: 'Bottom_Hand',
-                                imageData: imageData,
-                                left: Math.round(pos.left),
-                                top: Math.round(pos.top),
-                                visible: true,
-                                transform: transform,
-                                scale: scale
-                            });
-                        } catch (err) {
-                            console.error('Error loading bottom hand:', err);
-                        }
-                        resolve();
-                    });
-                    imageLoadPromises.push(loadPromise);
-                }
-            }
-
-            // Thêm top hand layer nếu có
-            if (document.getElementById('enableHand').checked && currentHand) {
-                const topHandImg = document.querySelector('.hand-layer:last-child');
-                if (topHandImg) {
-                    const loadPromise = new Promise(async (resolve) => {
-                        const pos = getElementPosition(topHandImg);
-                        try {
-                            const imageData = await loadImageData(currentHand.topLayer);
-                            const style = window.getComputedStyle(topHandImg);
-                            const transform = style.transform;
-                            
-                            // Tính toán scale dựa trên setting của người dùng
-                            const scale = currentHand.scale;
-                            
-                            psdLayers.push({
-                                name: 'Top_Hand',
-                                imageData: imageData,
-                                left: Math.round(pos.left),
-                                top: Math.round(pos.top),
-                                visible: true,
-                                transform: transform,
-                                scale: scale
-                            });
-                        } catch (err) {
-                            console.error('Error loading top hand:', err);
-                        }
-                        resolve();
-                    });
-                    imageLoadPromises.push(loadPromise);
-                }
-            }
-
-            // Đợi tất cả ảnh được load xong
-            await Promise.all(imageLoadPromises);
-
-            if (psdLayers.length === 0) {
-                throw new Error('No layers to export');
-            }
-
-            console.log('Creating PSD with layers:', psdLayers.length);
-
-            // Tạo PSD với ag-psd
-            const psd = {
-                width: preview.clientWidth * 2,
-                height: preview.clientHeight * 2,
-                children: psdLayers.map(layer => {
-                    // Tính toán scale và rotation từ transform
-                    let scale = layer.scale || 1;
-                    let rotation = 0;
-                    if (layer.transform) {
-                        const matrix = new WebKitCSSMatrix(layer.transform);
-                        rotation = Math.atan2(matrix.m12, matrix.m11) * 180 / Math.PI;
-                    }
-
-                    return {
-                        name: layer.name,
-                        left: Math.round(layer.left * 2),
-                        top: Math.round(layer.top * 2),
-                        visible: layer.visible,
-                        imageData: layer.imageData,
-                        opacity: 255,
-                        transform: {
-                            scale: scale,
-                            rotation: rotation
-                        }
-                    };
-                })
-            };
-
-            console.log('PSD options:', psd);
-
-            const buffer = window.agPsd.writePsd(psd);
-
-            console.log('PSD buffer created, size:', buffer.byteLength);
-
-            // Download file
-            downloadBufferAsFile(buffer, 'poker_hand.psd');
-        } catch (error) {
-            console.error('Error creating PSD:', error);
-            alert('Error creating PSD file: ' + error.message + '\nPlease check console for details.');
-        }
-    };
+    // document.getElementById('exportPSD').onclick = async function() {
+    //     if (!window.agPsd) {
+    //         alert('ag-psd library not loaded. Cannot export PSD file.');
+    //         return;
+    //     }
+    //
+    //     const preview = document.getElementById('preview');
+    //     const psdLayers = [];
+    //
+    //     try {
+    //         // Tạo một mảng chứa promises của tất cả các ảnh cần load
+    //         const imageLoadPromises = [];
+    //
+    //         // Thêm các layer bài
+    //         const cardElements = Array.from(document.querySelectorAll('.card'));
+    //         for (let i = 0; i < cardElements.length; i++) {
+    //             const card = cardElements[i];
+    //             const loadPromise = new Promise(async (resolve) => {
+    //                 const pos = getElementPosition(card);
+    //                 try {
+    //                     // Tìm ID của card
+    //                     let cardId = '';
+    //                     for (const [id, url] of Object.entries(cardMap)) {
+    //                         if (url === card.src) {
+    //                             cardId = id;
+    //                             break;
+    //                         }
+    //                     }
+    //
+    //                     const imageData = await loadImageData(card.src);
+    //                     const style = window.getComputedStyle(card);
+    //                     const transform = style.transform;
+    //                     const scale = parseFloat(style.width) / originalCardSizes[cardId].width;
+    //
+    //                     psdLayers.push({
+    //                         name: `card_${cardId}`,
+    //                         imageData: imageData,
+    //                         left: Math.round(pos.left),
+    //                         top: Math.round(pos.top),
+    //                         visible: true,
+    //                         transform: transform,
+    //                         scale: scale
+    //                     });
+    //                 } catch (err) {
+    //                     console.error('Error loading card:', err);
+    //                 }
+    //                 resolve();
+    //             });
+    //             imageLoadPromises.push(loadPromise);
+    //         }
+    //
+    //         // Thêm bottom hand layer nếu có
+    //         if (hand_loaded && currentHand) {
+    //             const bottomHandImg = document.querySelector('.hand-layer:first-child');
+    //             if (bottomHandImg) {
+    //                 const loadPromise = new Promise(async (resolve) => {
+    //                     const pos = getElementPosition(bottomHandImg);
+    //                     try {
+    //                         const imageData = await loadImageData(currentHand.bottomLayer);
+    //                         const style = window.getComputedStyle(bottomHandImg);
+    //                         const transform = style.transform;
+    //
+    //                         // Tính toán scale dựa trên setting của người dùng
+    //                         const scale = currentHand.scale * 100;
+    //
+    //                         psdLayers.unshift({
+    //                             name: 'Bottom_Hand',
+    //                             imageData: imageData,
+    //                             left: Math.round(pos.left),
+    //                             top: Math.round(pos.top),
+    //                             visible: true,
+    //                             transform: transform,
+    //                             scale: scale
+    //                         });
+    //                     } catch (err) {
+    //                         console.error('Error loading bottom hand:', err);
+    //                     }
+    //                     resolve();
+    //                 });
+    //                 imageLoadPromises.push(loadPromise);
+    //             }
+    //         }
+    //
+    //         // Thêm top hand layer nếu có
+    //         if (hand_loaded && currentHand) {
+    //             const topHandImg = document.querySelector('.hand-layer:last-child');
+    //             if (topHandImg) {
+    //                 const loadPromise = new Promise(async (resolve) => {
+    //                     const pos = getElementPosition(topHandImg);
+    //                     try {
+    //                         const imageData = await loadImageData(currentHand.topLayer);
+    //                         const style = window.getComputedStyle(topHandImg);
+    //                         const transform = style.transform;
+    //
+    //                         // Tính toán scale dựa trên setting của người dùng
+    //                         const scale = currentHand.scale;
+    //
+    //                         psdLayers.push({
+    //                             name: 'Top_Hand',
+    //                             imageData: imageData,
+    //                             left: Math.round(pos.left),
+    //                             top: Math.round(pos.top),
+    //                             visible: true,
+    //                             transform: transform,
+    //                             scale: scale
+    //                         });
+    //                     } catch (err) {
+    //                         console.error('Error loading top hand:', err);
+    //                     }
+    //                     resolve();
+    //                 });
+    //                 imageLoadPromises.push(loadPromise);
+    //             }
+    //         }
+    //
+    //         // Đợi tất cả ảnh được load xong
+    //         await Promise.all(imageLoadPromises);
+    //
+    //         if (psdLayers.length === 0) {
+    //             throw new Error('No layers to export');
+    //         }
+    //
+    //         console.log('Creating PSD with layers:', psdLayers.length);
+    //
+    //         // Tạo PSD với ag-psd
+    //         const psd = {
+    //             width: preview.clientWidth * 2,
+    //             height: preview.clientHeight * 2,
+    //             children: psdLayers.map(layer => {
+    //                 // Tính toán scale và rotation từ transform
+    //                 let scale = layer.scale || 1;
+    //                 let rotation = 0;
+    //                 if (layer.transform) {
+    //                     const matrix = new WebKitCSSMatrix(layer.transform);
+    //                     rotation = Math.atan2(matrix.m12, matrix.m11) * 180 / Math.PI;
+    //                 }
+    //
+    //                 return {
+    //                     name: layer.name,
+    //                     left: Math.round(layer.left * 2),
+    //                     top: Math.round(layer.top * 2),
+    //                     visible: layer.visible,
+    //                     imageData: layer.imageData,
+    //                     opacity: 255,
+    //                     transform: {
+    //                         scale: scale,
+    //                         rotation: rotation
+    //                     }
+    //                 };
+    //             })
+    //         };
+    //
+    //         console.log('PSD options:', psd);
+    //
+    //         const buffer = window.agPsd.writePsd(psd);
+    //
+    //         console.log('PSD buffer created, size:', buffer.byteLength);
+    //
+    //         // Download file
+    //         downloadBufferAsFile(buffer, 'poker_hand.psd');
+    //     } catch (error) {
+    //         console.error('Error creating PSD:', error);
+    //         alert('Error creating PSD file: ' + error.message + '\nPlease check console for details.');
+    //     }
+    // };
 
     document.getElementById('addLayer').click();
 
@@ -1565,7 +1862,7 @@ try {
 `;
 
         // Bottom hand layer
-        if (document.getElementById('enableHand').checked && currentHand) {
+        if (hand_loaded && currentHand) {
             const bottomHandImg = document.querySelector('.hand-layer:first-child');
             if (bottomHandImg) {
                 const style = window.getComputedStyle(bottomHandImg);
@@ -1643,7 +1940,7 @@ try {
         }
 
         // Top hand layer
-        if (document.getElementById('enableHand').checked && currentHand) {
+        if (hand_loaded && currentHand) {
             const topHandImg = document.querySelector('.hand-layer:last-child');
             if (topHandImg) {
                 const style = window.getComputedStyle(topHandImg);
@@ -1713,7 +2010,7 @@ try {
         }
         
         // Add hand images only if enabled and visible in preview
-        if (document.getElementById('enableHand').checked && currentHand) {
+        if (hand_loaded && currentHand) {
             const bottomHandImg = document.querySelector('.hand-layer:first-child');
             const topHandImg = document.querySelector('.hand-layer:last-child');
             
@@ -1743,7 +2040,7 @@ try {
     }
 
     // Add export button to UI
-    document.getElementById('exportConfig').addEventListener('click', exportConfiguration);
+    // document.getElementById('exportConfig').addEventListener('click', exportConfiguration);
 
     function downloadBufferAsFile(buffer, filename) {
         const blob = new Blob([buffer], { type: 'application/octet-stream' });

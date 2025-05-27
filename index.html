@@ -5,12 +5,31 @@
     <title>Poker Composer v2.0</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+    <style>
+        .config {
+            min-width: 300px;        /* Cố định 800px */
+            height: 100%;
+            margin-left: 0;
+            /*padding: 20px;*/
+            /*background-color: #e0e0e0;*/
+            /*border: 1px solid #ccc;*/
+        }
+
+
+    </style>
+    <style>
+        .background-controls{
+            border: 1px solid white;
+        }
+    </style>
+
+
 </head>
 <body>
-<div class="container">
+<div class="container " >
     <div class="config">
         <div class="box-controls">
-            <div class="box-controls title">Poker Composer v2.0</div>
+            <div class="box-controls title">Banner Creator</div>
         </div>
         <div class="size-controls">
             <label for="outputSize"><b>Chọn kích thước banner:</b></label>
@@ -30,9 +49,9 @@
                 <textarea id="bg_prompt" style="width: 270px; height: 150px;" ></textarea>
                 <button id="ai_bg_generate" type="button" >Generate</button>
             </div>
-            <div class="form-row"><label><input checked="checked" type="checkbox" id="enableBackground"> Setup Background</label></div>
-            <div class="form-row"><label><input type="checkbox" id="backgroundAutoFit"> Auto-fit background</label></div>
-            <div id="backgroundOptions" style="display:block;">
+            <div class="form-row"><label><input type="checkbox" id="enableBackground"> Setup Local Background</label></div>
+            <div class="form-row"><label><input type="checkbox" checked="checked" id="backgroundAutoFit"> Auto-fit background</label></div>
+            <div id="backgroundOptions" style="display:none;">
                 <input type="file" id="backgroundImageInput" accept="image/*">
                 <div class="form-row"><label>BG Scale (%):</label><input type="range" id="backgroundScale" min="10" max="300" value="100"></div>
                 <div class="form-row"><label>BG Rotation (deg):</label><input type="range" id="backgroundRotation" min="-180" max="180" value="0"></div>
@@ -42,10 +61,13 @@
 
         </div>
 
+
+        <div  class="offset-controls">
         <div>
-            <label><input type="checkbox"checked="checked" id="enableHand"> Enable Hand</label>
+            <!--<label><input type="checkbox"checked="checked" id="enableHand"> Enable Hand</label>-->
+            <label id="loading_hand_label">Loading hands...</label>
         </div>
-        <div class="hand-controls" style="display: block;">
+        <div class="hand-controls" id="hand_control" style="display: none;">
 <!--            <div>-->
 <!--                <label>Hand Controls:</label>-->
 <!--                <button id="browseHands">Browse Hands</button>-->
@@ -74,11 +96,17 @@
                 <input type="range" id="handScale" min="10" max="150" value="100">
             </div>
         </div>
+        </div>
 
-        
+
         <div>
-        <label for="outputSize" ><b>Chỉnh sửa bộ bài:</b></label>
-        <input type="file" disabled="disabled" id="folderPicker" webkitdirectory directory multiple>
+            <!--<label><input type="checkbox"checked="checked" id="enableHand"> Enable Hand</label>-->
+            <label id="loading_card_label">Loading cards...</label>
+        </div>
+
+        <div id="card_control"  class="background-controls" style="display: none;" >
+        <label for="outputSize" >Chỉnh sửa bộ bài:</label>
+        <!--<input type="file" disabled="disabled" id="folderPicker" webkitdirectory directory multiple>-->
             <div>
                 <label for="outputSize" >Chọn Card Style:</label>
             <select id="cardStyle">
@@ -88,7 +116,7 @@
                 <option value="bigcard">Bigcard</option>
             </select>
         </div>
-    </div>
+
 
         <div>
             <label>Chọn Layout Style:</label>
@@ -129,31 +157,58 @@
             <label>Arc Control:</label>
             <input type="range" id="arcControl" min="-100" max="100" value="0">
         </div>
-        <div id="layers"></div>
-        <button id="addLayer">Add Layer</button>
+            <label>Tạo layer bài:</label>
 
+            <div id="layers"></div>
+        <button id="addLayer">Add Layer</button>
+        </div>
+
+        <div class="background-controls">
+            <label>Tạo text:</label>
 
         <div class="text-controls">
             <button id="addTextElement" type="button">Add Text</button>
             <div id="textElementsContainer"></div>
         </div>
+        </div>
 
-        <div class="element-controls">
+
+        <div class="background-controls">
+            <label>Add thêm ảnh logo :</label>
             <button id="addUpperElement" type="button">Add Upper Element</button>
             <button id="addLowerElement" type="button">Add Lower Element</button>
             <div id="upperElementsContainer"></div>
             <div id="lowerElementsContainer"></div>
         </div>
 
-        <div class="export-buttons">
+        <div class="background-controls">
+            <label>Export :</label>
+            <div class="element-controls">
+                <label>Country :</label>
+                <select id="country">
+                    <option value="vn">VN</option>
+                </select>
+                <label>Game :</label>
+                <select id="game">
+                    <option value="tongits">...</option>
+                </select>
+                <label>Pillars :</label>
+                <label>Preview Name :</label>
+                <label id = "img_name_lb">VN|sam_vn|RealCard|.png</label>
+            </div>
+            <button id="publish">PUBLISH -> UA TOOL</button>
             <button id="exportPNG">EXPORT PNG</button>
-            <button id="exportPSD" class="blue">EXPORT PSD</button>
-            <button id="exportConfig" class="orange-red">EXPORT CONFIG</button>
+            <!--<button id="exportPSD" class="blue" disabled="disabled">EXPORT PSD </button>-->
+            <!--<button id="exportConfig" class="orange-red" disabled="disabled">EXPORT CONFIG</button>-->
+        </div>
+
+        <div class="export-buttons">
+
         </div>
     </div>
     <div class="preview-area">
         <div id="preview" style="background:transparent"></div>
-        <div class="preview-outline" id="previewOutline"></div>
+        <!--<div class="preview-outline" id="previewOutline"></div>-->
     </div>
 </div>
 
