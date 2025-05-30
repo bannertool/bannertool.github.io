@@ -279,6 +279,21 @@ window.addEventListener("DOMContentLoaded", function () {
         document.getElementById('loading_card_label').style.display = "none";
         render();
     })
+
+
+    document.getElementById('cardStyle').addEventListener('change', function(e) {
+        if (!e.target.value) return; // Nếu chưa chọn, không làm gì cả
+        console.log(e.target.value);
+
+        load_cards(url_prefix + e.target.value).then(()=>{
+            card_loaded = true;
+            document.getElementById('card_control').style.display = "block";
+            document.getElementById('loading_card_label').style.display = "none";
+            render();
+        })
+    });
+
+
     //
     // document.getElementById('folderPicker').addEventListener('change', async (e) => {
     //     fileMap = {};
@@ -1172,7 +1187,7 @@ window.addEventListener("DOMContentLoaded", function () {
     const sizeMap = {
         '1:1': { width: 1080, height: 1080 },
         '5:4': { width: 1350, height: 1080 },
-        '16:9': { width: 1920, height: 1080 }
+        '9:16': { width: 1080, height: 1920 }
     };
     setTimeout(()=>{
         setPreviewSize('1:1');

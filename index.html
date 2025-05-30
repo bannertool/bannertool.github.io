@@ -8,8 +8,10 @@
     <style>
         .config {
             min-width: 300px;        /* Cố định 800px */
-            height: 100%;
+            /*height: 100%;*/
             margin-left: 0;
+            height: 100vh;
+            overflow-y: auto;
             /*padding: 20px;*/
             /*background-color: #e0e0e0;*/
             /*border: 1px solid #ccc;*/
@@ -43,7 +45,7 @@
 <!--                <option value="">-&#45;&#45;&#45;&#45;</option>-->
                 <option value="1:1">1:1 (1080x1080)</option>
                 <option value="5:4">5:4 (1350x1080)</option>
-                <option value="16:9">16:9 (1920x1080)</option>
+                <option value="9:16">9:16 (1080x1920)</option>
             </select>
         </div>
 
@@ -115,8 +117,8 @@
             <div>
                 <label for="outputSize" >Chọn Card Style:</label>
             <select id="cardStyle">
-                <option value="tongits">Tongits</option>
-                <option value="thai">Thai</option>
+                <option value="Tongits">Tongits</option>
+                <option value="Thai">Thai</option>
                 <option value="anime">Anime</option>
                 <option value="bigcard">Bigcard</option>
             </select>
